@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#071D40">
+<meta name="description" content="DPC digitālo prasmju centra pārtraukuma taimeris">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<title>DPC · Pārtraukuma taimeris</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#071D40; --navy2:#0E2F66; --blue:#1765CE; --sky:#4FA3FF;
+    --red:#E63946; --orange:#F47A26; --green:#00A36C; --violet:#6C4DE6;
+    --mint:#E7F7EF; --text:#FFFFFF; --muted:rgba(255,255,255,.62); --glass:rgba(255,255,255,.07); --line:rgba(255,255,255,.14);
+    --ring:var(--sky);
+  }
+  *{box-sizing:border-box;margin:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{font-family:Roboto,Arial,sans-serif;color:var(--text);background:var(--navy);overflow-x:hidden;display:flex;flex-direction:column;min-height:100vh}
+  button,input{font:inherit;color:inherit}
+
+  /* Фон: фирменный градиент + плавающие пятна */
+  .bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(120% 90% at 50% 0%,var(--navy2) 0%,var(--navy) 60%);overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;animation:float 22s ease-in-out infinite alternate}
+  .b1{width:46vmax;height:46vmax;background:var(--blue);top:-18vmax;left:-12vmax}
+  .b2{width:34vmax;height:34vmax;background:var(--violet);bottom:-14vmax;right:-8vmax;animation-delay:-7s;opacity:.4}
+  .b3{width:22vmax;height:22vmax;background:var(--red);top:40%;right:12%;animation-delay:-14s;opacity:.22}
+  .b4{width:18vmax;height:18vmax;background:var(--green);bottom:6%;left:14%;animation-delay:-3s;opacity:.2}
+  @keyframes float{to{transform:translate(6vmax,4vmax) scale(1.12)}}
+  .grid{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.08) 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%)}
+
+  /* Шапка */
+  header{display:flex;justify-content:space-between;align-items:center;padding:clamp(14px,2.5vh,28px) clamp(16px,4vw,48px) 0;transition:opacity .5s}
+  .logo{display:flex;align-items:center;gap:clamp(10px,1.4vw,18px);text-decoration:none;color:#fff}
+  .logo b{font-weight:900;font-size:clamp(56px,8vw,112px);line-height:.9;letter-spacing:-.03em;filter:drop-shadow(0 6px 24px rgba(23,101,206,.55));background:linear-gradient(135deg,#fff,#BFD9FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .logo span{font-size:clamp(11px,1.15vw,16px);font-weight:700;letter-spacing:.12em;line-height:1.25;color:var(--muted)}
+  .now{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;background:var(--glass);border:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums;backdrop-filter:blur(10px)}
+  .now i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(0,163,108,.25)}
+
+  /* Центр */
+  main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(14px,2.5vh,26px);padding:8px 16px 24px}
+  .pill{display:inline-flex;align-items:center;gap:10px;padding:10px 20px;border-radius:99px;background:var(--mint);color:#0B3B22;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(13px,1.6vw,18px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .pill .cup{font-size:1.3em;display:inline-block;animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-3px) rotate(-6deg)}}
+  .x-steam{position:absolute;left:50%;top:-14px;width:2px;height:10px;border-radius:2px;background:#0B3B22;opacity:0;animation:steam 2.4s infinite}
+  .steam:nth-child(2){margin-left:-6px;animation-delay:.8s}.steam:nth-child(3){margin-left:6px;animation-delay:1.6s}
+  @keyframes steam{0%{opacity:0;transform:translateY(6px) scaleY(.6)}40%{opacity:.5}100%{opacity:0;transform:translateY(-8px) scaleY(1.2)}}
+  body.end .pill{background:var(--red);color:#fff}
+
+  .stage{position:relative;width:var(--size);height:var(--size);--size:min(46vh,78vw);transition:width .6s cubic-bezier(.2,.8,.2,1),height .6s cubic-bezier(.2,.8,.2,1)}
+  body.running .stage,body.end .stage{--size:min(66vh,88vw)}
+  .stage svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+  .track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:5}
+  .ticks{fill:none;stroke:rgba(255,255,255,.18);stroke-width:1.6;stroke-dasharray:.6 4.6}
+  .prog{fill:none;stroke:url(#g);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .25s linear;filter:drop-shadow(0 0 6px var(--ring))}
+  .glow{position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(23,101,206,.35),transparent 70%);transition:background .6s}
+  body.warn .glow{background:radial-gradient(circle,rgba(244,122,38,.35),transparent 70%)}
+  body.end .glow{background:radial-gradient(circle,rgba(230,57,70,.45),transparent 70%);animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{transform:scale(1.08);opacity:.6}}
+  .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .clock{font-weight:700;font-size:calc(var(--size) * .26);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-shadow:0 6px 40px rgba(0,0,0,.35)}
+  body.end .clock{color:var(--red);animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .until{margin-top:calc(var(--size) * .035);font-size:calc(var(--size) * .045);color:var(--muted);font-weight:400;min-height:1.3em}
+  .until b{color:#fff;font-weight:700}
+
+  /* Панель управления */
+  .panel{display:flex;flex-direction:column;gap:14px;align-items:center;padding:18px;border-radius:22px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);max-width:min(860px,94vw);transition:opacity .5s,transform .5s}
+  .row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+  .field{display:flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+  .field input{width:76px;padding:10px 6px;background:transparent;border:0;text-align:center;font-size:26px;font-weight:700;outline:none}
+  .field input.title{width:200px;font-size:16px;font-weight:500;text-align:left;padding-left:12px}
+  .field span{color:var(--muted);font-size:13px}
+  .seg{display:inline-flex;gap:4px;padding:4px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+  .seg button{padding:10px 16px;border-radius:10px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-weight:500;transition:.2s;white-space:nowrap}
+  .seg button:hover{color:#fff}
+  .seg button.on{background:#fff;color:var(--navy);font-weight:700}
+  .field input.hm{width:52px;padding:10px 0}
+  .field .colon{font-size:26px;margin:0 -2px}
+  body.how-at .dur-only,body:not(.how-at) .at-only{display:none!important}
+  .left-note{color:var(--muted);font-size:14px;min-width:150px}
+  .left-note b{color:#fff}
+  body.lesson.end .pill{background:var(--green)}
+  body.lesson.end .clock{color:#3EE09A}
+  body.lesson.end .glow{background:radial-gradient(circle,rgba(0,163,108,.45),transparent 70%)}
+  .chip{padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:transparent;cursor:pointer;font-weight:500;transition:.2s}
+  .chip:hover{background:rgba(255,255,255,.1)}
+  .chip.on{background:#fff;color:var(--navy);border-color:#fff}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);cursor:pointer;font-weight:500;transition:.2s}
+  .btn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);font-weight:700;box-shadow:0 8px 24px rgba(23,101,206,.45)}
+  .btn.primary:hover{background:#1D74E8}
+  .btn.danger{color:#FFB3B9}
+  body.running .setup,body.end .setup{display:none}
+  body.running .panel,body.end .panel{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;background:rgba(7,29,64,.55)}
+  body.running main,body.end main{padding-bottom:110px}
+  .hint{font-size:12px;color:var(--muted)}
+  kbd{padding:1px 6px;border-radius:5px;border:1px solid var(--line);font-family:inherit;font-size:11px}
+
+  /* Автоскрытие в режиме показа */
+  body.idle .now,body.idle .panel{opacity:0;pointer-events:none}
+  .now{transition:opacity .5s}
+  body.idle .panel{transform:translate(-50%,20px)}
+  body.idle{cursor:none}
+  .opt{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;cursor:pointer;user-select:none}
+  .opt input[type=checkbox]{width:18px;height:18px;accent-color:var(--blue);cursor:pointer}
+  .opt input.secs{width:48px;padding:6px 4px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.25);text-align:center;font-weight:700;font-size:15px;outline:none}
+  .opt.off input.secs{opacity:.4}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,40px);opacity:0;padding:12px 18px;border-radius:12px;background:#fff;color:var(--navy);font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.3);transition:.35s;z-index:9;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* Вход (для PHP-версии) */
+  .login{margin:auto;width:min(380px,92vw);padding:34px;border-radius:24px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);display:flex;flex-direction:column;gap:16px}
+  .login h1{font-size:22px;font-weight:700}
+  .login p{color:var(--muted);font-size:14px;margin-top:-8px}
+  .login input{padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.25);font-size:16px;outline:none}
+  .login input:focus{border-color:var(--sky)}
+  .err{color:#FF8A94;font-size:14px}
+
+  @media (max-height:780px){.hint{display:none}.panel{padding:12px;gap:10px}main{gap:10px}.stage{--size:min(33vh,78vw)}.pill{padding:8px 18px}.logo b{font-size:clamp(48px,6.5vw,84px)}}
+  @media (max-width:600px){.field input.title{width:150px}.logo span{display:none}}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div><div class="grid"></div></div>
+  <header>
+    <a class="logo" href="https://www.dpc.lv" target="_blank" rel="noopener"><b>DPC</b><span>DIGITĀLO<br>PRASMJU CENTRS</span></a>
+    <div class="now"><i></i><span id="now">--:--:--</span></div>
+  </header>
+
+  <main>
+    <div class="pill"><span class="cup" id="icon">☕</span><span id="label">Pārtraukums</span></div>
+
+    <div class="stage">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop id="g1" offset="0" stop-color="#4FA3FF"/><stop id="g2" offset="1" stop-color="#1765CE"/>
+        </linearGradient></defs>
+        <circle class="ticks" cx="50" cy="50" r="49"/>
+        <circle class="track" cx="50" cy="50" r="44"/>
+        <circle class="prog" id="prog" cx="50" cy="50" r="44"/>
+      </svg>
+      <div class="center">
+        <div class="clock" id="clock">10:00</div>
+        <div class="until" id="until">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row setup">
+        <div class="seg" id="kind">
+          <button data-v="break" class="on">☕ Pārtraukums</button>
+          <button data-v="lesson">🎓 Līdz nodarbībai</button>
+        </div>
+        <div class="seg" id="how">
+          <button data-v="dur" class="on">⏱ Ilgums</button>
+          <button data-v="at">🕘 Līdz laikam</button>
+        </div>
+      </div>
+      <div class="row setup">
+        <label class="field dur-only"><input type="number" id="min" min="0" max="180" value="10" aria-label="Minūtes"><span>min</span></label>
+        <label class="field dur-only"><input type="number" id="sec" min="0" max="59" value="0" aria-label="Sekundes"><span>sek</span></label>
+        <button class="chip dur-only" data-m="5">5</button>
+        <button class="chip dur-only on" data-m="10">10</button>
+        <button class="chip dur-only" data-m="15">15</button>
+        <button class="chip dur-only" data-m="30">30</button>
+        <button class="chip dur-only" data-m="60">60</button>
+        <label class="field at-only"><span style="padding-left:10px">līdz</span><input type="text" inputmode="numeric" maxlength="2" id="atH" value="09" aria-label="Stunda" class="hm"><b class="colon">:</b><input type="text" inputmode="numeric" maxlength="2" id="atM" value="00" aria-label="Minūte" class="hm"></label>
+        <div class="left-note at-only" id="leftNote"></div>
+        <label class="field"><input class="title" id="title" value="Pārtraukums" maxlength="28" aria-label="Virsraksts"></label>
+      </div>
+      <div class="row setup">
+        <label class="opt" id="acWrap"><input type="checkbox" id="ac" checked> Pēc beigām automātiski izslēgt pēc <input class="secs" type="text" inputmode="numeric" maxlength="3" id="acSec" value="5"> s</label>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="start">▶ Sākt</button>
+        <button class="btn" id="pause" hidden>❚❚ Pauze</button>
+        <button class="btn" id="add">+1 min</button>
+        <button class="btn danger" id="reset">↺ Atiestatīt</button>
+        <button class="btn" id="fs">⛶ Pilnekrāns</button>
+        <button class="btn" id="hide" hidden>👁 Paslēpt</button>
+      </div>
+      <div class="hint"><kbd>Space</kbd> sākt &nbsp;·&nbsp; <kbd>F</kbd> pilnekrāns &nbsp;·&nbsp; vadība paslēpjas pēc 3 s · <kbd>H</kbd> paslēpt</div>
+    </div>
+  </main>
+  <div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const C = 2 * Math.PI * 44;                      // длина окружности кольца
+const prog = $('prog'); prog.style.strokeDasharray = C;
+let total = 0, endAt = 0, left = 0, tick = null, ended = false, armed = false;
+let kind = 'break', how = 'dur';
+
+const TXT = {
+  break:  { icon:'☕', title:'Pārtraukums',             until:'Turpināsim plkst.', endT:'Pārtraukums beidzies', endS:'Atgriežamies pie nodarbības!' },
+  lesson: { icon:'🎓', title:'Nodarbība drīz sāksies',  until:'Sāksim plkst.',     endT:'Nodarbība sākas',      endS:'Laipni lūdzam! Sākam.' }
+};
+
+const fmt = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(x).padStart(2,'0'); };
+const hhmm = d => d.toLocaleTimeString('lv-LV', {hour:'2-digit', minute:'2-digit'});
+
+/* Целевое время "до 09:00" — сегодня по локальным часам компьютера */
+const pad = n => String(n).padStart(2, '0');
+function atValue() { return pad(Math.min(23, +$('atH').value || 0)) + ':' + pad(Math.min(59, +$('atM').value || 0)); }
+function setAt(v) { const [h, m] = v.split(':'); $('atH').value = h; $('atM').value = m; }
+function targetMs() {
+  const [h, m] = atValue().split(':').map(Number);
+  const d = new Date(); d.setHours(h, m, 0, 0); return d.getTime();
+}
+const inputSecs = () => how === 'at'
+  ? Math.max(0, (targetMs() - Date.now()) / 1000)
+  : (+$('min').value || 0) * 60 + Math.min(59, +$('sec').value || 0);
+
+function setColors(a, b){ $('g1').setAttribute('stop-color', a); $('g2').setAttribute('stop-color', b); document.documentElement.style.setProperty('--ring', a); }
+
+function render() {
+  $('clock').textContent = fmt(left);
+  const frac = total ? Math.max(0, left / total) : 1;
+  prog.style.strokeDashoffset = C * (1 - frac);
+  const warn = tick && left <= 60 && left > 0;
+  document.body.classList.toggle('warn', !!warn);
+  if (ended) { kind === 'lesson' ? setColors('#3EE09A', '#00A36C') : setColors('#FF6B76', '#E63946'); prog.style.strokeDashoffset = 0; }
+  else if (warn) setColors('#FFB066', '#F47A26');
+  else setColors('#4FA3FF', '#1765CE');
+}
+
+function loop() {
+  left = (endAt - Date.now()) / 1000;
+  if (left <= 0) { left = 0; finish(); }
+  render();
+}
+
+function setUntil(t) { $('until').innerHTML = TXT[kind].until + ' <b>' + hhmm(new Date(t || endAt)) + '</b>'; }
+
+function start() {
+  if (tick) return;
+  if (!armed) {                                   // новый запуск
+    if (how === 'at') {
+      const t = targetMs();
+      if (t - Date.now() < 1000) { toast('Laiks ' + atValue() + ' šodien jau pagājis. Norādiet vēlāku laiku.'); return; }
+      endAt = t; total = (t - Date.now()) / 1000;
+    } else {
+      total = left = inputSecs(); if (left <= 0) return;
+      endAt = Date.now() + left * 1000;
+    }
+    armed = true; ended = false;
+  } else if (how === 'dur') {                     // продолжение после паузы
+    endAt = Date.now() + left * 1000;
+  }
+  setUntil();
+  $('label').textContent = $('title').value || TXT[kind].title;
+  document.body.classList.remove('end');
+  document.body.classList.add('running');
+  tick = setInterval(loop, 250);
+  $('start').hidden = true; $('pause').hidden = (how === 'at'); $('hide').hidden = false;
+  loop(); armIdle();
+}
+
+function pause() {
+  if (how === 'at') return;                       // до точного времени пауза не имеет смысла
+  clearInterval(tick); tick = null;
+  $('start').hidden = false; $('pause').hidden = true; $('hide').hidden = true; $('start').textContent = '▶ Turpināt';
+  $('until').textContent = 'Pauze';
+  wake(); render();
+}
+
+function finish() {
+  clearInterval(tick); tick = null; ended = true; armed = false;
+  $('label').textContent = TXT[kind].endT;
+  $('until').textContent = TXT[kind].endS;
+  $('start').hidden = false; $('pause').hidden = true; $('hide').hidden = true; $('start').textContent = '▶ Sākt vēlreiz';
+  document.body.classList.add('end');
+  clearTimeout(idleT); document.body.classList.remove('idle');
+  beep();
+  if ($('ac').checked) {
+    let n = Math.max(1, +$('acSec').value || 5);
+    const tickAc = () => { $('until').innerHTML = TXT[kind].endS + '<br><small style="font-size:.6em;opacity:.7">Taimeris izslēgsies pēc ' + n + ' s</small>'; };
+    tickAc(); clearInterval(acT);
+    acT = setInterval(() => { if (--n <= 0) { clearInterval(acT); autoClose(); } else tickAc(); }, 1000);
+  }
+}
+
+/* Авто-выключение: выходим из полноэкранного режима, пробуем закрыть вкладку,
+   если браузер не разрешает — возвращаемся на стартовый экран */
+let acT;
+async function autoClose() {
+  try { if (isFS()) await (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+  try { window.close(); } catch (e) {}
+  setTimeout(() => { reset(); toast('Taimeris izslēgts'); }, 300);
+}
+
+function preview() {
+  total = left = inputSecs();
+  if (how === 'at') {
+    const ok = targetMs() > Date.now();
+    $('leftNote').innerHTML = ok ? 'atlicis <b>' + fmt(left) + '</b>' : '<span style="color:#FF8A94">laiks jau pagājis</span>';
+    setUntil(targetMs());
+  } else {
+    $('until').innerHTML = '&nbsp;';
+  }
+  render();
+}
+
+function reset() {
+  clearInterval(tick); tick = null; ended = false; armed = false;
+  $('label').textContent = $('title').value || TXT[kind].title;
+  $('start').hidden = false; $('pause').hidden = true; $('hide').hidden = true; $('start').textContent = '▶ Sākt'; clearInterval(acT);
+  document.body.classList.remove('running', 'end', 'warn');
+  wake(); preview(); save();
+}
+
+/* Переключатели: тип (перерыв / до урока) и способ (длительность / до времени) */
+function setSeg(id, v) { document.querySelectorAll('#' + id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); }
+function setKind(v, keepTitle) {
+  const prevDefault = TXT[kind].title;
+  kind = v; setSeg('kind', v);
+  document.body.classList.toggle('lesson', v === 'lesson');
+  $('icon').textContent = TXT[v].icon;
+  if (!keepTitle && (!$('title').value || $('title').value === prevDefault || Object.values(TXT).some(t => t.title === $('title').value))) $('title').value = TXT[v].title;
+}
+function setHow(v) { how = v; setSeg('how', v); document.body.classList.toggle('how-at', v === 'at'); }
+
+document.querySelectorAll('#kind button').forEach(b => b.onclick = () => {
+  setKind(b.dataset.v);
+  if (b.dataset.v === 'lesson') setHow('at'); else setHow('dur');   // разумные значения по умолчанию
+  reset();
+});
+document.querySelectorAll('#how button').forEach(b => b.onclick = () => { setHow(b.dataset.v); reset(); });
+['atH','atM'].forEach(id => {
+  $(id).oninput = () => { $(id).value = $(id).value.replace(/\D/g, ''); if (!armed) reset(); if (id === 'atH' && $(id).value.length === 2) $('atM').focus(); };
+  $(id).onblur = () => { setAt(atValue()); if (!armed) reset(); };
+  $(id).onfocus = () => $(id).select();
+});
+
+/* Запоминаем выбор педагога в этом браузере */
+function save() { try { localStorage.setItem('dpcTimer', JSON.stringify({ kind, how, at: atValue(), min: $('min').value, sec: $('sec').value, title: $('title').value, ac: $('ac').checked, acSec: $('acSec').value })); } catch (e) {} }
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('dpcTimer') || 'null'); if (!d) return;
+    if (d.at) setAt(d.at); if (d.min != null) $('min').value = d.min; if (d.sec != null) $('sec').value = d.sec;
+    setKind(d.kind || 'break', true); setHow(d.how || 'dur');
+    if (d.title) $('title').value = d.title;
+    if (d.ac != null) $('ac').checked = d.ac; if (d.acSec) $('acSec').value = d.acSec; $('acWrap').classList.toggle('off', !$('ac').checked);
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.m === String(d.min) && +d.sec === 0));
+  } catch (e) {}
+}
+
+/* Пока не запущено — живой предпросмотр "до 09:00" */
+setInterval(() => { if (!armed && !ended && how === 'at') preview(); }, 1000);
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[0,659],[.25,784],[.5,988],[1.1,659],[1.35,784],[1.6,988]].forEach(([t,f]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.0001, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.35, ctx.currentTime + t + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + t + .35);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .4); });
+  } catch (e) {}
+}
+
+/* Полноэкранный режим: стандарт + Safari; если браузер запрещает — подсказка */
+function isFS(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+async function toggleFS() {
+  const el = document.documentElement;
+  try {
+    if (isFS()) { await (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) throw new Error('blocked');
+    await req.call(el);
+  } catch (e) {
+    toast('Šeit pilnekrāns ir bloķēts. Nospiediet F11 (Mac: ⌃⌘F) vai atveriet failu atsevišķā cilnē.');
+  }
+}
+function syncFS(){ $('fs').textContent = isFS() ? '✕ Iziet no pilnekrāna' : '⛶ Pilnekrāns'; }
+document.addEventListener('fullscreenchange', syncFS);
+document.addEventListener('webkitfullscreenchange', syncFS);
+
+let toastT; function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 4500); }
+
+/* Автоскрытие панели, пока идёт отсчёт */
+let idleT;
+const panel = document.querySelector('.panel');
+function wake(){ document.body.classList.remove('idle'); clearTimeout(idleT); if (tick) armIdle(); }
+function armIdle(){
+  clearTimeout(idleT);
+  idleT = setTimeout(() => {
+    if (!tick) return;
+    if (panel.matches(':hover') || panel.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return armIdle();
+    document.body.classList.add('idle');
+  }, 3000);
+}
+function hideNow(){ if (tick) { clearTimeout(idleT); if (document.activeElement) document.activeElement.blur(); document.body.classList.add('idle'); } }
+/* Панель возвращается только если мышь опущена к низу экрана, по клику или касанию */
+document.addEventListener('mousemove', e => { if (!document.body.classList.contains('idle')) return; if (e.clientY > innerHeight * 0.72) wake(); }, {passive:true});
+['mousedown','touchstart'].forEach(ev => document.addEventListener(ev, wake, {passive:true}));
+
+$('start').onclick = start;
+$('pause').onclick = pause;
+$('reset').onclick = reset;
+$('fs').onclick = toggleFS;
+$('hide').onclick = hideNow;
+$('ac').onchange = () => { $('acWrap').classList.toggle('off', !$('ac').checked); save(); };
+$('acSec').oninput = () => { $('acSec').value = $('acSec').value.replace(/\D/g, ''); save(); };
+$('acSec').onblur = () => { if (!+$('acSec').value) $('acSec').value = 5; save(); };
+$('add').onclick = () => {
+  if (armed) { endAt += 60000; total += 60; if (tick) loop(); else left += 60; if (tick) setUntil(); render(); return; }
+  if (how === 'at') { const d = new Date(Math.max(targetMs(), Date.now()) + 60000); setAt(pad(d.getHours()) + ':' + pad(d.getMinutes())); }
+  else { $('min').value = (+$('min').value || 0) + 1; document.querySelectorAll('.chip').forEach(c => c.classList.remove('on')); }
+  reset();
+};
+document.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
+  $('min').value = b.dataset.m; $('sec').value = 0; reset(); });
+['min','sec'].forEach(id => $(id).oninput = () => { document.querySelectorAll('.chip').forEach(c => c.classList.remove('on')); if (!tick) reset(); });
+$('title').oninput = () => { if (!ended) $('label').textContent = $('title').value || TXT[kind].title; save(); };
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); tick ? pause() : start(); }
+  if (e.key === 'f' || e.key === 'F') toggleFS();
+  if (e.key === 'h' || e.key === 'H') hideNow();
+  if (e.key === 'Escape' && document.body.classList.contains('idle')) wake();
+});
+
+setInterval(() => $('now').textContent = new Date().toLocaleTimeString('lv-LV'), 1000);
+$('now').textContent = new Date().toLocaleTimeString('lv-LV');
+load();
+reset();
+
+/* PWA: service worker ļauj taimerim darboties arī bez interneta */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

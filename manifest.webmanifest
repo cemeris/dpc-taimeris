@@ -1,0 +1,20 @@
+{
+  "name": "DPC · Pārtraukuma taimeris",
+  "short_name": "DPC taimeris",
+  "description": "DPC digitālo prasmju centra pārtraukuma taimeris",
+  "lang": "lv",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071D40",
+  "theme_color": "#071D40",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
